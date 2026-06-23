@@ -1,5 +1,6 @@
 from datetime import timedelta
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 class RealEstateProperty(models.Model):
     _name = 'real.estate.property'
@@ -34,7 +35,8 @@ class RealEstateProperty(models.Model):
         ],
         required=True,
         copy=False,
-        default='new'
+        default='new',
+        string='Status'
     )
     total_area = fields.Integer(compute='_compute_total_area', string='Total Area (sqm)')
     best_price = fields.Float(compute='_compute_best_price')
@@ -66,3 +68,15 @@ class RealEstateProperty(models.Model):
         else:
             self.garden_area = 0
             self.garden_orientation = ''
+
+    def action_set_sold(self):
+        for record in self:
+            if record.state == 'canceled':
+                raise UserError('Canceled properites cannot be sold.')
+            record.state = 'sold'
+
+    def action_set_canceled(self):
+        for record in self:
+            if record.state == 'sold':
+                raise UserError('Sold properites cannot be canceled.')
+            record.state = 'canceled'
